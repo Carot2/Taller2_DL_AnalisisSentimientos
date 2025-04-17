@@ -30,7 +30,7 @@ En este proyecto se implementaron y compararon tres tipos de arquitecturas de re
 
 ### ¿Qué es una RNN?
 
-![Red Neuronal Recurrente](https://www.researchgate.net/profile/Rishikesh-Gawde/publication/351840108/figure/fig1/AS:1027303769374723@1621939713840/Fig-3-RNN-A-recurrent-neural-network-RNN-is-a-class-of-artificial-neural-networks.ppm)
+![Red Neuronal Recurrente](https://github.com/Carot2/Taller2_DL_AnalisisSentimientos/blob/main/graphics/RNN.png)
 
 Una Red Neuronal Recurrente (RNN) es un tipo de red diseñada para procesar secuencias de datos. A diferencia de una red neuronal tradicional, una RNN tiene una "memoria interna" que le permite recordar información de entradas anteriores, lo cual es útil en tareas como procesamiento de lenguaje natural. Sin embargo, las RNN simples suelen sufrir del problema de desvanecimiento del gradiente, lo que limita su capacidad para aprender dependencias a largo plazo.
 
@@ -42,7 +42,7 @@ La Long Short-Term Memory (LSTM) es una variante de la RNN diseñada para resolv
 
 ### ¿Qué es una BiLSTM con atención?
 
-![BILSTM + ATTENTION](https://www.researchgate.net/profile/Hao-Wu-19/publication/329512919/figure/fig1/AS:701588624646144@1544283171783/The-architecture-of-BiLSTM-Attention-model.ppm)
+![BILSTM + ATTENTION](https://github.com/Carot2/Taller2_DL_AnalisisSentimientos/blob/main/graphics/BILSTM_ATTENTION.png)
 
 Una BiLSTM (Bidirectional LSTM) procesa la secuencia tanto hacia adelante como hacia atrás, capturando contexto tanto previo como posterior en una oración. Esto mejora significativamente la comprensión semántica. Además, al añadir un mecanismo de **atención**, el modelo puede aprender a enfocarse en las palabras más relevantes del texto para tomar decisiones de clasificación, mejorando la interpretación y el rendimiento en tareas complejas como el análisis de sentimiento.
 
@@ -84,8 +84,82 @@ Para entrenar nuestros modelos, trabajamos con un conjunto de datos de tweets p�
 | `label` | Sentimiento asociado al tweet (`0`: negativo, `1`: positivo). |
 | `tweet` | Texto completo del tweet, que puede contener menciones, hashtags, emojis, URLs y símbolos. |
 
+se verificó que el dataset **no contiene valores nulos ni duplicados**, lo que facilita el proceso de preprocesamiento y entrenamiento de modelos sin requerir limpieza adicional por valores faltantes.
 
-### **Preprocesamiento aplicado al dataset**
+--
+
+## 📊 Análisis de características y preprocesamiento de datos
+
+A partir del análisis exploratorio del conjunto de datos, se pueden destacar las siguientes observaciones clave:
+
+### 1. 🧮 Desbalanceo de clases
+
+El dataset presenta un **fuerte desbalanceo de clases**, con:
+
+- `29,720` tweets etiquetados como **negativos**
+- `2,242` tweets etiquetados como **positivos**
+
+Esto representa una proporción de aproximadamente **13:1 a favor de la clase negativa**, como puede observarse en la siguiente gráfica:
+![Distribución de Tweets](https://github.com/Carot2/Taller2_DL_AnalisisSentimientos/blob/main/graphics/DistribucionTweets.png)
+
+
+### 2. 🔠 Longitud de los tweets y tokens
+
+- El análisis inicial muestra que:
+  - El **95%** de los tweets negativos tiene una longitud menor o igual a **116 caracteres**
+  - El **95%** de los tweets positivos no supera los **113 caracteres**
+
+Esto justifica la elección de una **longitud máxima de 120 caracteres** como límite razonable para los modelos.
+
+Posteriormente, al **tokenizar** los textos, se observó que el **95% de los tweets contiene como máximo 33 tokens**. Esta información se usó para definir el parámetro `max_len = 33` durante el padding, lo que permite una representación **uniforme, eficiente y sin pérdida de información**.
+![Distribución de Tokens](https://github.com/Carot2/Taller2_DL_AnalisisSentimientos/blob/main/graphics/LongTokens.png)
+
+
+### 3. 🧾 Palabras más frecuentes por clase
+
+Se realizó un análisis de las palabras más frecuentes en tweets negativos y positivos. Los resultados muestran diferencias claras en el vocabulario utilizado, lo que indica que los modelos podrían aprender patrones relevantes para clasificar los tweets correctamente.
+
+- En los tweets negativos predominan términos emocionales o expresivos como `love`, `happy`, `day`, `life`.
+
+![PalabrasNegativas](https://github.com/Carot2/Taller2_DL_AnalisisSentimientos/blob/main/graphics/NubePalabrasNegativo.png)
+
+- En los positivos (según etiqueta) se observan palabras relacionadas a política o ideologías como `trump`, `racist`, `libtard`.
+![PalabrasPositivas](https://github.com/Carot2/Taller2_DL_AnalisisSentimientos/blob/main/graphics/NubePalabrasPositivo.png)
+
+Esto puede deberse a sesgos en el dataset original, lo cual también debe tenerse en cuenta.
+
+---
+
+### 4. 🧪 Preprocesamiento aplicado
+
+Para preparar los textos para el modelo, se aplicaron las siguientes transformaciones:
+
+- Conversión a **minúsculas**
+- Eliminación de **menciones** (`@user`)
+- Eliminación de **hashtags**, manteniendo la palabra clave
+- Remoción de **URLs**
+- Eliminación de **emojis, caracteres especiales y puntuación**
+- Reducción de **espacios múltiples**
+- Tokenización y padding uniforme (`max_len = 33`)
+
+---
+
+
+Desde acá en construcción
+
+### 5. ⚖️ Estrategias para abordar el desbalanceo ---
+
+Debido al fuerte desbalance, se consideraron las siguientes estrategias:
+
+- **Oversampling**: duplicar ejemplos de la clase minoritaria para equilibrar las proporciones.
+- **SMOTE**: técnica de sobre-muestreo sintético que genera ejemplos nuevos de la clase minoritaria.
+- **Class Weights**: ponderar la pérdida durante el entrenamiento para penalizar más los errores en la clase minoritaria.
+
+En este proyecto, se experimentó principalmente con **oversampling** y `class_weight`, dependiendo del modelo implementado.
+
+
+
+
 
 
 
@@ -164,23 +238,7 @@ Para evaluar un modelo entrenado:
 python src/evaluate.py --model models/bilstm_attention_model.h5 --test_size 0.2
 ```
 
-## Arquitectura de los Modelos
 
-### RNN Básica
-- Embedding Layer
-- SimpleRNN Layer
-- Dense Layer con activación sigmoid
-
-### LSTM Estándar
-- Embedding Layer
-- LSTM Layer
-- Dense Layer con activación sigmoid
-
-### BiLSTM + Atención
-- Embedding Layer
-- Bidirectional LSTM con retorno de secuencias
-- Capa de Atención personalizada
-- Dense Layer con activación sigmoid
 
 ## Resultados
 
