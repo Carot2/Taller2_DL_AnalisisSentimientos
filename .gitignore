@@ -1,0 +1,27 @@
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribución / empaquetado
+dist/
+build/
+*.egg-info/
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+
+# Archivos de Jupyter Notebook
+.ipynb_checkpoints
+
+# Archivos de configuración y caché
+.DS_Store
+.idea/
+.vscode/
+
+# Archivos grandes o datos que no deberían estar en Git
+*.csv
+*.h5
+*.pkl
