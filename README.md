@@ -337,9 +337,6 @@ Tras entrenar y evaluar las tres arquitecturas propuestas (RNN, LSTM y BiLSTM+At
 
 > **Conclusión de rendimiento**: Aunque la RNN obtuvo un mayor accuracy global, el modelo BiLSTM+Atención demostró ser superior en la detección de la clase minoritaria, lo cual es crucial en datasets altamente desbalanceados como el evaluado.
 
-
-## 🧠Conclusiones
-
 ## 🧠 Conclusiones
 
 - El análisis de sentimiento en datasets desbalanceados requiere algo más que optimizar el accuracy general; es fundamental mejorar métricas como el **recall** y el **F1-score**.
