@@ -1,7 +1,4 @@
-"""
-Módulo para cargar y preprocesar los datos de tweets
-"""
-
+""" Módulo para cargar y preprocesar los datos de tweets """
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -48,7 +45,7 @@ def load_data(url=None, balance_method=None, random_state=42):
     
     return df
 
-def prepare_data(df, max_words=10000, max_len=100, test_size=0.2, balance_method=None, random_state=42):
+def prepare_data(df, max_words=10000, max_len=100, test_size=0.2, val_size=0.1, balance_method=None, random_state=42):
     """
     Prepara los datos para entrenamiento, incluyendo tokenización y padding
     
@@ -57,54 +54,81 @@ def prepare_data(df, max_words=10000, max_len=100, test_size=0.2, balance_method
         max_words (int): Tamaño máximo del vocabulario
         max_len (int): Longitud máxima de cada secuencia
         test_size (float): Proporción de datos para testing
+        val_size (float): Proporción de datos para validación (del conjunto de entrenamiento)
         balance_method (str): Método de balanceo ('smote' o None)
         random_state (int): Semilla para reproducibilidad
         
     Returns:
-        tuple: (X_train, X_test, y_train, y_test, tokenizer)
+        dict: Diccionario con los conjuntos de datos y el tokenizer
     """
-    # Dividir en train y test
-    X_train, X_test, y_train, y_test = train_test_split(
-        df['cleaned_tweet'], 
-        df['label'], 
-        test_size=test_size, 
+    # Primero dividir en train y test
+    train_df, test_df = train_test_split(
+        df,
+        test_size=test_size,
         random_state=random_state,
         stratify=df['label']  # Mantener proporción de clases
     )
     
+    # Luego dividir train en train y validation
+    train_df, val_df = train_test_split(
+        train_df,
+        test_size=val_size/(1-test_size),  # Ajustar proporción
+        random_state=random_state,
+        stratify=train_df['label']  # Mantener proporción de clases
+    )
+    
     # Tokenización
     tokenizer = Tokenizer(num_words=max_words)
-    tokenizer.fit_on_texts(X_train)
+    tokenizer.fit_on_texts(train_df['cleaned_tweet'])
     
     # Convertir textos a secuencias
-    X_train_seq = tokenizer.texts_to_sequences(X_train)
-    X_test_seq = tokenizer.texts_to_sequences(X_test)
+    X_train_seq = tokenizer.texts_to_sequences(train_df['cleaned_tweet'])
+    X_val_seq = tokenizer.texts_to_sequences(val_df['cleaned_tweet'])
+    X_test_seq = tokenizer.texts_to_sequences(test_df['cleaned_tweet'])
     
     # Padding
     X_train_pad = pad_sequences(X_train_seq, maxlen=max_len)
+    X_val_pad = pad_sequences(X_val_seq, maxlen=max_len)
     X_test_pad = pad_sequences(X_test_seq, maxlen=max_len)
+    
+    # Obtener etiquetas
+    y_train = train_df['label'].values
+    y_val = val_df['label'].values
+    y_test = test_df['label'].values
     
     # Aplicar SMOTE si se solicita (solo a los datos de entrenamiento)
     if balance_method == 'smote':
         X_train_pad, y_train = apply_smote(X_train_pad, y_train, random_state=random_state)
     
-    return X_train_pad, X_test_pad, y_train, y_test, tokenizer
+    # Empaquetar todo en un diccionario para facilitar su uso
+    data = {
+        'X_train': X_train_pad,
+        'y_train': y_train,
+        'X_val': X_val_pad,
+        'y_val': y_val,
+        'X_test': X_test_pad,
+        'y_test': y_test,
+        'tokenizer': tokenizer,
+        'vocab_size': min(max_words, len(tokenizer.word_index) + 1)
+    }
+    
+    return data
 
-def get_class_weights(y_train):
-    """
-    Calcula los pesos de clase para manejar el desbalanceo
+# Ejemplo de uso
+if __name__ == "__main__":
+    # Cargar y balancear datos
+    df = load_data(balance_method='oversampling')
     
-    Args:
-        y_train: Etiquetas de entrenamiento
-        
-    Returns:
-        dict: Diccionario con los pesos de cada clase
-    """
-    # Contar clases
-    class_counts = np.bincount(y_train)
+    # Preparar datos para entrenamiento
+    data = prepare_data(df, balance_method=None)  # No usar SMOTE aquí si ya aplicamos oversampling
     
-    # Calcular pesos (inverso de la frecuencia)
-    total = len(y_train)
-    class_weights = {i: total / (len(class_counts) * count) for i, count in enumerate(class_counts)}
+    # Verificar distribución de clases
+    print(f"Conjunto de entrenamiento: {np.bincount(data['y_train'])}")
+    print(f"Conjunto de validación: {np.bincount(data['y_val'])}")
+    print(f"Conjunto de prueba: {np.bincount(data['y_test'])}")
     
-    return class_weights
+    # Los datos están listos para ser utilizados en el entrenamiento de modelos
+    # X_train, y_train = data['X_train'], data['y_train']
+    # X_val, y_val = data['X_val'], data['y_val']
+    # X_test, y_test = data['X_test'], data['y_test']
+    # vocab_size = data['vocab_size']
