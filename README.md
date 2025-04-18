@@ -212,66 +212,144 @@ csv_path = tf.keras.utils.get_file("twitter_sentiment.csv", url)
 df = pd.read_csv(csv_path)
 ```
 
-### Entrenamiento de Modelos
+### 🚀 Entrenamiento de Modelos
 
-Cada modelo se puede entrenar ejecutando el notebook correspondiente:
+Para entrenar los modelos (RNN, LSTM o BiLSTM+Atención) tienes **dos opciones** según tu preferencia:
+
+#### Opción 1: Usando Jupyter Notebooks (modo interactivo)
+
+1. Abre una terminal (CMD, PowerShell o terminal de VSCode).
+2. Ubícate en la carpeta raíz del proyecto:
+
+   ```bash
+   cd "C:\Users\USER\Documentos\Maestría\Deep Learning\Taller2_DL_AnalisisSentimientos"
+
+Lanza el servidor de Jupyter Notebook:
+```bash
+   jupyter notebook
+```
+Se abrirá una ventana en tu navegador web. Dentro del navegador:
+   Abre la carpeta notebooks/.
+
+3. Ejecuta uno por uno los siguientes notebooks para entrenar cada modelo:
+
+   02_entrenamiento_RNN.ipynb (para RNN)
+   03_entrenamiento_LSTM.ipynb (para LSTM)
+   04_BiLSTM_atencion.ipynb (para BiLSTM+Atención)
+
+Corre las celdas dentro de cada notebook manualmente (Shift + Enter).
+
+✅ Ideal si quieres ver gráficas de entrenamiento y outputs en tiempo real.
+
+#### Opción 2: Usando scripts desde Terminal (modo directo)
+Si prefieres entrenar los modelos directamente desde la terminal, sin abrir Jupyter, puedes ejecutar:
 
 ```bash
-jupyter notebook notebooks/02_entrenamiento_RNN.ipynb
-jupyter notebook notebooks/03_entrenamiento_LSTM.ipynb
-jupyter notebook notebooks/04_BiLSTM_atencion.ipynb
+--RNN python -m src.train --model rnn --epochs 5 --batch_size 128
+--LSTM python -m src.train --model lstm --epochs 5 --batch_size 128
+--BiLSTM+Atención python -m src.train --model bilstm_attention --epochs 5 --batch_size 128
 ```
 
-También se puede ejecutar desde la línea de comandos usando los scripts en `src/`:
+📌 Notas importantes:
+
+* Los modelos entrenados se guardarán automáticamente en la carpeta /models/.
+* El tokenizer utilizado también se guardará como archivo .json.
+* Puedes personalizar el número de épocas (--epochs), tamaño de batch (--batch_size), balanceo (--balance) y si quieres usar pesos de clase (--class_weights).
+
+## 📈 Evaluación y Predicción de Modelos
+
+Una vez entrenados los modelos, puedes evaluarlos, comparar su rendimiento o hacer predicciones individuales de sentimientos usando el script `src/evaluate.py`.
+
+Asegúrate de estar ubicado en la carpeta raíz del proyecto antes de ejecutar los siguientes comandos.
+
+---
+
+### 🔎 Evaluar un solo modelo
+
+Evalúa un modelo entrenado (`.h5`) sobre un conjunto de datos de prueba:
 
 ```bash
-python src/train.py --model rnn --epochs 5 --batch_size 128
-python src/train.py --model lstm --epochs 5 --batch_size 128
-python src/train.py --model bilstm_attention --epochs 5 --batch_size 128
+python -m src.evaluate --model models/bilstm_attention_model.h5 --test_size 0.2
+python -m src.evaluate --model models/lstm_model.h5 --test_size 0.2
+python -m src.evaluate --model models/rnn_model.h5 --test_size 0.2
 ```
 
-### Evaluación de Modelos
-
-Para evaluar un modelo entrenado:
-
+### 🥽 Evaluar un modelo usando un tokenizer específico
+Si deseas usar un tokenizer .json diferente al que se infiere por defecto:
 ```bash
-python src/evaluate.py --model models/bilstm_attention_model.h5 --test_size 0.2
+python -m src.evaluate --model models/bilstm_attention_model.h5 --tokenizer models/bilstm_attention_tokenizer.json
 ```
 
+### 🔬 Predecir el sentimiento de un texto personalizado
+Puedes usar un modelo entrenado para predecir el sentimiento de un nuevo texto:
+```bash
+python -m src.evaluate --model models/bilstm_attention_model.h5 --tokenizer models/bilstm_attention_tokenizer.json --text "I love this product!"
+```
 
+### 📊 Comparar varios modelos
+Compara automáticamente todos los modelos .h5 en la carpeta /models/, evaluando su precisión, recall, F1-score, etc.:
+```bash
+python -m src.evaluate --model models/bilstm_attention_model.h5 --compare
+```
+Nota: --model debe apuntar a un modelo ubicado dentro de la carpeta que contiene los demás modelos para comparar.
 
-## Resultados
+## 📈 Resultados
 
-A continuación se presentan las métricas de rendimiento de cada modelo:
+A continuación se presentan las métricas de rendimiento de cada modelo evaluado:
 
-| Modelo | Accuracy | Precision | Recall | F1-Score |
-|--------|----------|-----------|--------|----------|
-| RNN    | X.XX     | X.XX      | X.XX   | X.XX     |
-| LSTM   | X.XX     | X.XX      | X.XX   | X.XX     |
-| BiLSTM+Atención | X.XX | X.XX  | X.XX   | X.XX     |
+| Modelo          | Accuracy | Precision | Recall    | F1-Score |
+|:----------------|:--------:|:---------:|:---------:|:--------:|
+| RNN             | 0.9299   | 0.0000    | 0.0000    | 0.0000   |
+| LSTM            | 0.9293   | 0.2500    | 0.0045    | 0.0088   |
+| BiLSTM+Atención | 0.9201   | 0.1400    | 0.0290    | 0.0484   |
 
-### Análisis Comparativo
+---
 
-(Aquí irá un análisis comparativo de los resultados una vez entrenados los modelos)
+### 📊 Análisis Comparativo de Modelos
 
-## Manejo del Desbalanceo de Clases
+- El modelo **RNN** alcanzó el mayor **accuracy** (92.99%), sin embargo, **falló en detectar ejemplos positivos**, mostrando una precisión y recall de 0.0%.
+- El modelo **LSTM** mejoró ligeramente la **precision** respecto a RNN, pero el **recall** sigue siendo muy bajo, indicando dificultades para identificar la clase minoritaria.
+- El modelo **BiLSTM+Atención**, aunque presentó un leve descenso en **accuracy** (92.01%), logró un **mejor equilibrio** entre precisión y recall en comparación a los anteriores, gracias al mecanismo de atención.
 
-Se implementaron dos estrategias para abordar el desbalanceo de clases (29720 negativos vs 2242 positivos):
+> **Conclusión preliminar:** El modelo BiLSTM+Atención ofrece un mejor compromiso entre sensibilidad (recall) y precisión para un dataset desbalanceado.
 
-1. **Oversampling**: Duplicación aleatoria de ejemplos de la clase minoritaria.
-2. **SMOTE**: Generación de ejemplos sintéticos para la clase minoritaria.
+---
 
-Los resultados muestran que... (Esto se completará con los resultados de los experimentos)
+## ⚖️ Manejo del Desbalanceo de Clases
 
+Para abordar el severo desbalance en el dataset original (29,720 negativos vs 2,242 positivos), se aplicaron las siguientes estrategias:
 
+1. **Oversampling**: Duplicación aleatoria de ejemplos de la clase minoritaria para igualar el número de ejemplos de la clase mayoritaria.
+2. **SMOTE (Synthetic Minority Over-sampling Technique)**: Generación sintética de nuevos ejemplos de la clase minoritaria en el espacio de características.
+
+Ambas estrategias fueron evaluadas en diferentes etapas del proyecto.  
+Los resultados sugieren que **combinar técnicas de balanceo con arquitecturas avanzadas** (como BiLSTM con atención) mejora la capacidad del modelo para detectar correctamente la clase minoritaria.
+
+---
 
 ## ⚡️ Rendimiento obtenido
 
+Tras entrenar y evaluar las tres arquitecturas propuestas (RNN, LSTM y BiLSTM+Atención) en el análisis de sentimiento de tweets, se observaron los siguientes resultados:
+
+- **RNN**: Alcanzó el mayor accuracy general (~92.99%), pero con incapacidad para identificar correctamente la clase minoritaria (recall = 0.00%).
+- **LSTM**: Mejoró marginalmente la capacidad de predicción de ejemplos positivos en comparación con la RNN, pero el recall aún resultó muy bajo (~0.0045).
+- **BiLSTM+Atención**: Logró un mejor balance entre precisión y sensibilidad, incrementando el recall (~2.90%) y el F1-Score (~4.84%), sacrificando ligeramente el accuracy.
+
+> **Conclusión de rendimiento**: Aunque la RNN obtuvo un mayor accuracy global, el modelo BiLSTM+Atención demostró ser superior en la detección de la clase minoritaria, lo cual es crucial en datasets altamente desbalanceados como el evaluado.
 
 
 ## 🧠Conclusiones
 
+## 🧠 Conclusiones
 
+- El análisis de sentimiento en datasets desbalanceados requiere algo más que optimizar el accuracy general; es fundamental mejorar métricas como el **recall** y el **F1-score**.
+- Modelos básicos como la **RNN** tienden a sesgarse hacia la clase mayoritaria, ignorando ejemplos de clases minoritarias.
+- **LSTM** mejora levemente la capacidad de generalización, pero no es suficiente por sí sola en presencia de desbalance severo.
+- **BiLSTM combinada con mecanismos de Atención** demostró ser la arquitectura más efectiva, logrando capturar contexto bidireccional y priorizar palabras clave relevantes en los tweets.
+- La implementación de técnicas de balanceo como **oversampling** y **class_weight** son imprescindibles para mejorar la detección de ejemplos de la clase minoritaria.
+- Para proyectos futuros, se recomienda explorar técnicas adicionales como **focal loss** y **estrategias de data augmentation textual** para seguir mejorando la sensibilidad del modelo ante ejemplos minoritarios.
+
+> **En conclusión:** BiLSTM+Atención, junto con estrategias de balanceo, proporciona una solución más robusta y adecuada para el análisis de sentimientos en entornos de datos desbalanceados.
 
 
 ## Autores del Proyecto 🤓

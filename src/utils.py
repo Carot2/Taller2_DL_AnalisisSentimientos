@@ -1,7 +1,7 @@
 """
 Utilidades para el análisis de sentimiento en tweets
 """
-
+import pandas as pd
 import re
 import numpy as np
 import matplotlib.pyplot as plt

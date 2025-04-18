@@ -84,7 +84,12 @@ def train_model(model_type='bilstm_attention',
     elif model_type == 'lstm':
         model = create_lstm_model(max_words, embedding_dim, units, dropout_rate)
     elif model_type == 'bilstm_attention':
-        model = create_bilstm_attention_model(max_words, embedding_dim, units, dropout_rate)
+        model = create_bilstm_attention_model(
+    vocab_size=max_words,
+    max_len=max_len,
+    embedding_dim=embedding_dim,
+    lstm_units=units,
+    dropout_rate=dropout_rate)
     else:
         raise ValueError(f"Tipo de modelo no soportado: {model_type}")
     
