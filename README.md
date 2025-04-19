@@ -243,9 +243,9 @@ Corre las celdas dentro de cada notebook manualmente (Shift + Enter).
 Si prefieres entrenar los modelos directamente desde la terminal, sin abrir Jupyter, puedes ejecutar:
 
 ```bash
---RNN python -m src.train --model rnn --epochs 5 --batch_size 128
---LSTM python -m src.train --model lstm --epochs 5 --batch_size 128
---BiLSTM+Atención python -m src.train --model bilstm_attention --epochs 5 --batch_size 128
+--RNN python -m src.train --model rnn --epochs 5 --batch_size 128 --class_weights
+--LSTM python -m src.train --model lstm --epochs 5 --batch_size 128 --class_weights
+--BiLSTM+Atención python -m src.train --model bilstm_attention --epochs 5 --batch_size 128 -class_weights
 ```
 
 📌 Notas importantes:
@@ -331,71 +331,72 @@ A continuación se presentan las métricas de rendimiento de cada modelo evaluad
 ### Modelos con Oversampling
 | Modelo          | Accuracy | Precision | Recall    | F1-Score |
 |:----------------|:--------:|:---------:|:---------:|:--------:|
-| BiLSTM+Atención | 0.497575 | 0.0799    | 0.5870    | 0.1407   |
-| LSTM            | 0.600501 | 0.0877    | 0.5000    | 0.1492   |
-| RNN             | 0.750821 | 0.0836    | 0.2566    | 0.1261   |
+| BiLSTM+Atención | 0.473330 | 0.0703    | 0.55334   | 0.1243   |
+| LSTM            | 0.555764 | 0.07708   | 0.4866    | 0.1330   |
+| RNN             | 0.854998 | 0.07610   | 0.0959    | 0.0848   |
 
 ### Modelos con SMOTE
 
 | Modelo          | Accuracy | Precision | Recall    | F1-Score |
 |:----------------|:--------:|:---------:|:---------:|:--------:|
-| BiLSTM+Atención | 0.663695 | 0.0872    | 0.4017    | 0.1434   |
-| LSTM            | 0.689973 | 0.0785    | 0.3191    | 0.1261   |
-| RNN             | 0.637885 | 0.0762    | 0.3750    | 0.1267   |
-
-### Modelos con Class_weights
-
-| Modelo          | Accuracy | Precision | Recall    | F1-Score |
-|:----------------|:--------:|:---------:|:---------:|:--------:|
-| BiLSTM+Atención | 0.926326 | 0.129032  | 0.00892   | 0.016701 |
-| LSTM            | 0.929767 | 0.0000    | 0.00000   | 0.0000   |
-| RNN             | 0.929923 | 0.0000    | 0.00000   | 0.0000   |
+| BiLSTM+Atención | 0.637260 | 0.0686    | 0.3325    | 0.1138   |
+| LSTM            | 0.778195 | 0.0971    | 0.2611    | 0.1416   |
+| RNN             | 0.868606 | 0.1156    | 0.1316    | 0.1231   |
 
 ---
 
 ### 📊 Análisis Comparativo de Modelos
 
-- El modelo **RNN** alcanzó el mayor **accuracy** (92.99%), sin embargo, **falló en detectar ejemplos positivos**, mostrando una precisión y recall de 0.0%.
-- El modelo **LSTM** mejoró ligeramente la **precision** respecto a RNN, pero el **recall** sigue siendo muy bajo, indicando dificultades para identificar la clase minoritaria.
-- El modelo **BiLSTM+Atención**, aunque presentó un leve descenso en **accuracy** (92.01%), logró un **mejor equilibrio** entre precisión y recall en comparación a los anteriores, gracias al mecanismo de atención.
+El modelo RNN logró el mayor accuracy tanto con Oversampling (85.5%) como con SMOTE (86.9%). Sin embargo, su capacidad de recall (detectar casos positivos) sigue siendo baja (~9.6% y ~13.2% respectivamente), mostrando que tiende a sesgarse hacia la clase mayoritaria.
 
-> **Conclusión preliminar:** El modelo BiLSTM+Atención ofrece un mejor compromiso entre sensibilidad (recall) y precisión para un dataset desbalanceado.
+El modelo LSTM mostró un pequeño incremento en precision y recall respecto al RNN, pero sigue teniendo dificultades para identificar correctamente la clase minoritaria, especialmente bajo Oversampling.
 
+El modelo BiLSTM+Atención, aunque tuvo el menor accuracy en ambos esquemas de balanceo, consiguió mejorar sustancialmente el recall, particularmente bajo Oversampling (55.3%), a costa de una precisión reducida.
+
+Insight clave: Aunque el BiLSTM+Atención sacrifica accuracy global, logra detectar más ejemplos de la clase minoritaria, lo cual es crucial en problemas altamente desbalanceados.
 ---
 
 ## ⚖️ Manejo del Desbalanceo de Clases
 
-Para abordar el severo desbalance en el dataset original (29,720 negativos vs 2,242 positivos), se aplicaron las siguientes estrategias:
+Dado el severo desbalance inicial (29,720 negativos vs 2,242 positivos), se implementaron dos estrategias principales:
 
-1. **Oversampling**: Duplicación aleatoria de ejemplos de la clase minoritaria para igualar el número de ejemplos de la clase mayoritaria.
-2. **SMOTE (Synthetic Minority Over-sampling Technique)**: Generación sintética de nuevos ejemplos de la clase minoritaria en el espacio de características.
+Oversampling: Duplicación aleatoria de ejemplos de la clase minoritaria para igualar la distribución.
 
-Ambas estrategias fueron evaluadas en diferentes etapas del proyecto.  
-Los resultados sugieren que **combinar técnicas de balanceo con arquitecturas avanzadas** (como BiLSTM con atención) mejora la capacidad del modelo para detectar correctamente la clase minoritaria.
+SMOTE: Generación sintética de nuevos ejemplos de la clase minoritaria mediante interpolación en el espacio de características.
+
+Ambos métodos permitieron mejorar la sensibilidad de los modelos hacia la clase minoritaria, especialmente en combinación con arquitecturas más complejas como BiLSTM+Atención.
 
 ---
 
 ## ⚡️ Rendimiento obtenido
 
-Tras entrenar y evaluar las tres arquitecturas propuestas (RNN, LSTM y BiLSTM+Atención) en el análisis de sentimiento de tweets, se observaron los siguientes resultados:
+RNN: Alto accuracy, pero pobre capacidad de detección de la clase minoritaria.
 
-- **RNN**: Alcanzó el mayor accuracy general (~92.99%), pero con incapacidad para identificar correctamente la clase minoritaria (recall = 0.00%).
-- **LSTM**: Mejoró marginalmente la capacidad de predicción de ejemplos positivos en comparación con la RNN, pero el recall aún resultó muy bajo (~0.0045).
-- **BiLSTM+Atención**: Logró un mejor balance entre precisión y sensibilidad, incrementando el recall (~2.90%) y el F1-Score (~4.84%), sacrificando ligeramente el accuracy.
+LSTM: Ligera mejora en recall y F1-Score respecto a RNN, pero aún insuficiente.
 
-> **Conclusión de rendimiento**: Aunque la RNN obtuvo un mayor accuracy global, el modelo BiLSTM+Atención demostró ser superior en la detección de la clase minoritaria, lo cual es crucial en datasets altamente desbalanceados como el evaluado.
+BiLSTM+Atención: Mejor desempeño en recall y F1-Score, haciendo que sea más efectivo para contextos donde detectar correctamente la clase minoritaria es prioritario.
+
+Conclusión preliminar:
+El modelo BiLSTM+Atención, junto con técnicas de balanceo como Oversampling y SMOTE, proporciona una solución más efectiva para análisis de sentimientos en datasets desbalanceados.
 
 ## 🧠 Conclusiones
 
-- El análisis de sentimiento en datasets desbalanceados requiere algo más que optimizar el accuracy general; es fundamental mejorar métricas como el **recall** y el **F1-score**.
-- Modelos básicos como la **RNN** tienden a sesgarse hacia la clase mayoritaria, ignorando ejemplos de clases minoritarias.
-- **LSTM** mejora levemente la capacidad de generalización, pero no es suficiente por sí sola en presencia de desbalance severo.
-- **BiLSTM combinada con mecanismos de Atención** demostró ser la arquitectura más efectiva, logrando capturar contexto bidireccional y priorizar palabras clave relevantes en los tweets.
-- La implementación de técnicas de balanceo como **oversampling** y **class_weight** son imprescindibles para mejorar la detección de ejemplos de la clase minoritaria.
-- Para proyectos futuros, se recomienda explorar técnicas adicionales como **focal loss** y **estrategias de data augmentation textual** para seguir mejorando la sensibilidad del modelo ante ejemplos minoritarios.
+Accuracy no es suficiente como métrica en datasets desbalanceados. Es crucial considerar recall y F1-Score.
 
-> **En conclusión:** BiLSTM+Atención, junto con estrategias de balanceo, proporciona una solución más robusta y adecuada para el análisis de sentimientos en entornos de datos desbalanceados.
+Modelos simples (como RNN) tienden a favorecer la clase mayoritaria.
 
+Modelos más complejos (como BiLSTM+Atención) logran mejor balance en las métricas críticas para detección de clases minoritarias.
+
+Técnicas de balanceo como Oversampling y SMOTE son imprescindibles y mejoran significativamente el rendimiento en detección minoritaria.
+
+Para futuras mejoras, sería recomendable explorar técnicas como:
+
+Focal Loss para penalizar más los errores en la clase minoritaria.
+
+Data Augmentation Textual (paráfrasis, sinónimos, traducciones) para enriquecer la diversidad de ejemplos positivos.
+
+En resumen:
+El uso de BiLSTM con mecanismos de atención, combinado con estrategias de balanceo, resulta en una aproximación más robusta para enfrentar tareas de análisis de sentimientos en entornos de datos desbalanceados.
 
 ## Autores del Proyecto 🤓
 

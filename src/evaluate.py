@@ -64,7 +64,9 @@ def evaluate_saved_model(model_path, tokenizer_path=None, test_size=0.2, max_len
         tokenizer = load_tokenizer(tokenizer_path)
         
         # Preparar datos con tokenizer cargado
-        _, X_test, _, y_test, _ = prepare_data(df, test_size=test_size)
+        data = prepare_data(df, test_size=test_size)
+        X_test = data['X_test']
+        y_test = data['y_test']
         
         # Evaluar modelo
         metrics = evaluate_model(model, X_test, y_test)

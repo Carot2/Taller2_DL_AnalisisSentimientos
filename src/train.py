@@ -9,11 +9,12 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
-from .data_loader import load_data, prepare_data, get_class_weights
+from .data_loader import load_data, prepare_data
 from .model_rnn import create_rnn_model
 from .model_lstm import create_lstm_model
 from .model_bilstm_attention import create_bilstm_attention_model, AttentionLayer
 from .utils import plot_history, evaluate_model, plot_class_distribution
+from sklearn.utils.class_weight import compute_class_weight
 
 def train_model(model_type='bilstm_attention', 
                 max_words=10000, 
@@ -62,10 +63,18 @@ def train_model(model_type='bilstm_attention',
     
     # Preparar datos
     test_size = 1 - validation_split
-    X_train, X_test, y_train, y_test, tokenizer = prepare_data(
-        df, max_words=max_words, max_len=max_len, test_size=test_size,
-        balance_method=balance_method if balance_method == 'smote' else None
-    )
+    data = prepare_data(
+    df, 
+    max_words=max_words, 
+    max_len=max_len, 
+    test_size=test_size,
+    balance_method=balance_method if balance_method == 'smote' else None)
+
+    X_train = data['X_train']
+    X_test = data['X_test']
+    y_train = data['y_train']
+    y_test = data['y_test']
+    tokenizer = data['tokenizer']
     
     # Mostrar info de los datos
     print(f"Tamaño del conjunto de entrenamiento: {len(X_train)} muestras")
@@ -73,8 +82,12 @@ def train_model(model_type='bilstm_attention',
     print(f"Tamaño del vocabulario: {min(len(tokenizer.word_index) + 1, max_words)} palabras")
     
     # Calcular pesos de clase si se solicita
-    class_weights = get_class_weights(y_train) if use_class_weights else None
+    class_weights = None
     if use_class_weights:
+        print("Calculando pesos de clase...")
+        classes = np.unique(y_train)
+        class_weights_values = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
+        class_weights = dict(zip(classes, class_weights_values))
         print("Pesos de clase:", class_weights)
     
     # Crear modelo según el tipo especificado
