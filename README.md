@@ -145,8 +145,6 @@ Para preparar los textos para el modelo, se aplicaron las siguientes transformac
 ---
 
 
-Desde acá en construcción
-
 ### 5. ⚖️ Estrategias para abordar el desbalanceo ---
 
 Debido al fuerte desbalance, se consideraron las siguientes estrategias:
@@ -256,11 +254,45 @@ Si prefieres entrenar los modelos directamente desde la terminal, sin abrir Jupy
 * El tokenizer utilizado también se guardará como archivo .json.
 * Puedes personalizar el número de épocas (--epochs), tamaño de batch (--batch_size), balanceo (--balance) y si quieres usar pesos de clase (--class_weights).
 
+## ⚙️ Estrategias de Balanceo de Clases
+
+Por defecto, **los modelos se entrenan sin aplicar técnicas de balanceo de clases**.  
+Esto significa que el dataset original, que presenta un fuerte desbalance (93% positivos vs 7% negativos), se utiliza tal cual para entrenar RNN, LSTM y BiLSTM+Atención.
+
+
+## 🚀 Cómo entrenar modelos aplicando técnicas de balanceo
+
+### 1. Entrenar con Oversampling
+
+```bash
+python -m src.train --model bilstm_attention --balance oversampling --epochs 5 --batch_size 128
+python -m src.train --model lstm --balance oversampling --epochs 5 --batch_size 128
+python -m src.train --model rnn --balance oversampling --epochs 5 --batch_size 128
+```
+### 2. Entrenar con SMOTE
+
+```bash
+python -m src.train --model bilstm_attention --balance smote --epochs 5 --batch_size 128
+python -m src.train --model lstm --balance smote --epochs 5 --batch_size 128
+python -m src.train --model rnn --balance smote --epochs 5 --batch_size 128
+```
+### 2. Entrenar con Class Weights
+
+```bash
+python -m src.train --model bilstm_attention --balance class_weights --epochs 5 --batch_size 128
+python -m src.train --model lstm --balance class_weights --epochs 5 --batch_size 128
+python -m src.train --model rnn --balance class_weights --epochs 5 --batch_size 128
+```
 ## 📈 Evaluación y Predicción de Modelos
 
 Una vez entrenados los modelos, puedes evaluarlos, comparar su rendimiento o hacer predicciones individuales de sentimientos usando el script `src/evaluate.py`.
 
 Asegúrate de estar ubicado en la carpeta raíz del proyecto antes de ejecutar los siguientes comandos.
+
+> **Nota:**  
+> Los comandos de evaluación funcionan con cualquier modelo `.h5` entrenado, ya sea sobre datos balanceados (oversampling, SMOTE, class weights) o no balanceados.  
+> Asegúrate de seleccionar el modelo correspondiente según la técnica que hayas utilizado en el entrenamiento.
+
 
 ---
 
@@ -296,12 +328,28 @@ Nota: --model debe apuntar a un modelo ubicado dentro de la carpeta que contiene
 ## 📈 Resultados
 
 A continuación se presentan las métricas de rendimiento de cada modelo evaluado:
+### Modelos con Oversampling
+| Modelo          | Accuracy | Precision | Recall    | F1-Score |
+|:----------------|:--------:|:---------:|:---------:|:--------:|
+| BiLSTM+Atención | 0.497575 | 0.0799    | 0.5870    | 0.1407   |
+| LSTM            | 0.600501 | 0.0877    | 0.5000    | 0.1492   |
+| RNN             | 0.750821 | 0.0836    | 0.2566    | 0.1261   |
+
+### Modelos con SMOTE
 
 | Modelo          | Accuracy | Precision | Recall    | F1-Score |
 |:----------------|:--------:|:---------:|:---------:|:--------:|
-| RNN             | 0.9299   | 0.0000    | 0.0000    | 0.0000   |
-| LSTM            | 0.9293   | 0.2500    | 0.0045    | 0.0088   |
-| BiLSTM+Atención | 0.9201   | 0.1400    | 0.0290    | 0.0484   |
+| BiLSTM+Atención | 0.663695 | 0.0872    | 0.4017    | 0.1434   |
+| LSTM            | 0.689973 | 0.0785    | 0.3191    | 0.1261   |
+| RNN             | 0.637885 | 0.0762    | 0.3750    | 0.1267   |
+
+### Modelos con Class_weights
+
+| Modelo          | Accuracy | Precision | Recall    | F1-Score |
+|:----------------|:--------:|:---------:|:---------:|:--------:|
+| BiLSTM+Atención | 0.926326 | 0.129032  | 0.00892   | 0.016701 |
+| LSTM            | 0.929767 | 0.0000    | 0.00000   | 0.0000   |
+| RNN             | 0.929923 | 0.0000    | 0.00000   | 0.0000   |
 
 ---
 

@@ -169,7 +169,7 @@ if __name__ == "__main__":
                         help='Número de épocas')
     
     parser.add_argument('--balance', type=str, default=None,
-                        choices=['oversampling', 'smote', None],
+                        choices=['oversampling', 'smote', "class_weights", None],
                         help='Método de balanceo de clases')
     
     parser.add_argument('--class_weights', action='store_true',
