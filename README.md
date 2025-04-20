@@ -402,7 +402,7 @@ El uso de BiLSTM con mecanismos de atención, combinado con estrategias de balan
 
 Este proyecto fue desarrollado por:
 
-* [Jeremías Pabón](https://github.com/jeremiaspabon) 
 * [Gersón Julián Rincón](https://github.com/Julk-ui) 
-* [Andrés Bravo](https://github.com/pipebravo10) 
+* [Andrés Bravo](https://github.com/pipebravo10)
+* [Jeremías Pabón](https://github.com/jeremiaspabon) 
 * [Carolina Tobaria](https://github.com/Carot2) 
