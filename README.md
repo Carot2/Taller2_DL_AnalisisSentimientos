@@ -156,11 +156,6 @@ Debido al fuerte desbalance, se consideraron las siguientes estrategias:
 En este proyecto, se experimentó principalmente con **oversampling** y `class_weight`, dependiendo del modelo implementado.
 
 
-
-
-
-
-
 ## Estructura del Repositorio
 
 ```
@@ -403,6 +398,12 @@ El uso de BiLSTM con mecanismos de atención, combinado con estrategias de balan
 Este proyecto fue desarrollado por:
 
 * [Gersón Julián Rincón](https://github.com/Julk-ui) 
+<<<<<<< HEAD
 * [Andrés Bravo](https://github.com/pipebravo10)
 * [Jeremías Pabón](https://github.com/jeremiaspabon) 
 * [Carolina Tobaria](https://github.com/Carot2) 
+=======
+* [Andrés Bravo](https://github.com/pipebravo10) 
+* [Carolina Tobaria](https://github.com/Carot2)
+* [Jeremías Pabón](https://github.com/jeremiaspabon) 
+>>>>>>> 73d62f7b59270bd919b60b1d548625f1d0e46e9a
